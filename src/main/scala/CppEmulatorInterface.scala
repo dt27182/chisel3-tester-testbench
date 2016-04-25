@@ -209,7 +209,7 @@ class CppEmulatorInterface(val cmd: String, val inputSignalToChunkSizeMap: Linke
     isStale = true
     println(s"  POKE ${signalName} <- ${bigIntToStr(value, 16)}")
   }
-  def peek(signalName: String): BigInt = {
+  def peek(signalName: String, mutePrintOut: Boolean = false): BigInt = {
     assert(inputSignalValueMap.contains(signalName) || outputSignalValueMap.contains(signalName))
     if (isStale) {
       update
@@ -224,14 +224,15 @@ class CppEmulatorInterface(val cmd: String, val inputSignalToChunkSizeMap: Linke
     result
   }
   def expect (signalName: String, expected: BigInt, msg: => String = ""): Boolean = {
-    val got = peek(signalName)
+    val got = peek(signalName, true)
     val good = got == expected
     if (!good) fail
-    println(s"""${msg} ${if (good) "PASS" else "FAIL"}""")
     println(s"${msg}  EXPECT ${signalName} -> ${bigIntToStr(got, 16)} == ${bigIntToStr(expected, 16)}")
+    println(s"${msg} ${if (good) "PASS" else "FAIL"}")
     good
   }
   def step(n: Int) {
+    println(s"STEP ${simTime} -> ${simTime+n}")
     (0 until n) foreach (_ => takeStep)
     incTime(n)
   }

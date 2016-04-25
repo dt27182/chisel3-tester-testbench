@@ -6,16 +6,27 @@ import Chisel.classictester._
 
 class Hello extends Module {
   val io = new Bundle {
-    val out = UInt(OUTPUT, width=65)
     val in = UInt(INPUT, width=65)
+    val out = UInt(OUTPUT, width=65)
+    val delayed_out = UInt(OUTPUT, width=65)
   }
+  val delayed_in = Reg(UInt(width=65))
+  delayed_in := io.in
   io.out := io.in
+  io.delayed_out := delayed_in
 }
 
 class HelloTester(c: Hello) extends ClassicTester(c) {
   poke(c.io.in, BigInt("10000000000000000", 16))
   peek(c.io.out)
   expect(c.io.out, BigInt("10000000000000000", 16))
+  peek(c.io.delayed_out)
+
+  poke(c.io.in, BigInt("10000000000000001", 16))
+  step(1)
+  peek(c.io.out)
+  expect(c.io.out, BigInt("10000000000000001", 16))
+  peek(c.io.delayed_out)
 }
 
 /*
