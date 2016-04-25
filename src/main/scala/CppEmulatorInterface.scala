@@ -194,6 +194,8 @@ class CppEmulatorInterface(val cmd: String, val inputSignalToChunkSizeMap: Linke
     }
   }
   def start() {
+    println(s"SEED ${testerSeed}")
+    println(s"STARTING ${cmd}")
     mwhile(!recvOutputs) { }
     reset(5)
     for (i <- 0 until 5) {
@@ -250,6 +252,7 @@ class CppEmulatorInterface(val cmd: String, val inputSignalToChunkSizeMap: Linke
     inChannel.close
     outChannel.close
     cmdChannel.close
+    println(s"""RAN ${simTime} CYCLES ${if (ok) "PASSED" else s"FAILED FIRST AT CYCLE ${failureTime}"}""")
     ok
   }
   /** Indicate a failure has occurred.  */

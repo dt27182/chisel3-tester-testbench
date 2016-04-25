@@ -3,94 +3,8 @@ package Chisel.classictester
 import java.io.{File, IOException, PrintWriter}
 import java.nio.file.{FileAlreadyExistsException, Files, Paths}
 import java.nio.file.StandardCopyOption.REPLACE_EXISTING
-
-import Chisel._
-
 import scala.collection.mutable.LinkedHashMap
-
-class ClassicTester(dut: Module) {
-  private val (inputNodeInfoMap, outputNodeInfoMap) = getNodeInfo(dut)
-  private val inputSignalToChunkSizeMap = new LinkedHashMap[String, Int]()
-  inputNodeInfoMap.toList.foreach(x => inputSignalToChunkSizeMap(x._2._1) = (x._2._2 - 1)/64 + 1)
-  println(inputSignalToChunkSizeMap)
-  private val outputSignalToChunkSizeMap = new LinkedHashMap[String, Int]()
-  outputNodeInfoMap.toList.foreach(x => outputSignalToChunkSizeMap(x._2._1) = (x._2._2 - 1)/64 + 1)
-  private val nodeToStringMap: Map[Data, String] = (inputNodeInfoMap.toList ++ outputNodeInfoMap.toList).map(x => (x._1, x._2._1)).toMap
-  private val cppEmulatorInterface = new CppEmulatorInterface(genCppEmulatorBinaryPath(dut), inputSignalToChunkSizeMap, outputSignalToChunkSizeMap, 0)
-  cppEmulatorInterface.start()//start cpp emulator
-
-
-  def poke(signal: Data, value: BigInt) = {
-    cppEmulatorInterface.poke(nodeToStringMap(signal), value)
-  }
-  def peek(signal: Data): BigInt = {
-    cppEmulatorInterface.peek(nodeToStringMap(signal))
-  }
-  def expect (signal: Data, expected: BigInt, msg: => String = ""): Boolean = {
-    cppEmulatorInterface.expect(nodeToStringMap(signal), expected, msg)
-  }
-  def step(n: Int) {
-    cppEmulatorInterface.step(n)
-  }
-  def finish(): Bool = {
-    cppEmulatorInterface.finish()
-  }
-}
-
-object genCppEmulatorBinaryPath {
-  def apply(dut: Module): String = {
-    val rootDirPath = new File(".").getCanonicalPath()
-    val testDirPath = s"${rootDirPath}/test_run_dir"
-    testDirPath + "/V" + dut.name
-  }
-}
-
-object getNodeInfo {
-  def apply(dut: Module): (LinkedHashMap[Data, (String, Int)], LinkedHashMap[Data, (String, Int)]) = {
-    val inputNodeInfoMap = new  LinkedHashMap[Data, (String, Int)]()
-    val outputNodeInfoMap = new  LinkedHashMap[Data, (String, Int)]()
-
-    def add_to_ports_by_direction(port: Data, name: String, width: Int): Unit = {
-      port.dir match {
-        case INPUT => inputNodeInfoMap(port) = (name, width)
-        case OUTPUT => outputNodeInfoMap(port) = (name, width)
-        case _ =>
-      }
-    }
-
-    def parseBundle(b: Bundle, name: String = ""): Unit = {
-      for ((n, e) <- b.namedElts) {
-        val new_name = name + (if (name.length > 0) "_" else "") + n
-        add_to_ports_by_direction(e, new_name, e.getWidth)
-
-        e match {
-          case bb: Bundle => parseBundle(bb, new_name)
-          case vv: Vec[_] => parseVecs(vv, new_name)
-          case ee: Element =>
-          case _ =>
-            throw new Exception(s"bad bundle member $new_name $e")
-        }
-      }
-    }
-    def parseVecs[T <: Data](b: Vec[T], name: String = ""): Unit = {
-      for ((e, i) <- b.zipWithIndex) {
-        val new_name = name + s"($i)"
-        add_to_ports_by_direction(e, new_name, e.getWidth)
-
-        e match {
-          case bb: Bundle => parseBundle(bb, new_name)
-          case vv: Vec[_] => parseVecs(vv, new_name)
-          case ee: Element =>
-          case _ =>
-            throw new Exception(s"bad bundle member $new_name $e")
-        }
-      }
-    }
-
-    parseBundle(dut.io, "io")
-    (inputNodeInfoMap, outputNodeInfoMap)
-  }
-}
+import Chisel._
 
 object runClassicTester {
   private def setupTestDir(testDirPath: String, verilogFilePath: String): Unit = {
@@ -134,6 +48,35 @@ object runClassicTester {
 
     val tester = testerGen(dut)
     tester.finish()
+  }
+}
+
+class ClassicTester(dut: Module) {
+  private val (inputNodeInfoMap, outputNodeInfoMap) = getNodeInfo(dut)
+  private val inputSignalToChunkSizeMap = new LinkedHashMap[String, Int]()
+  inputNodeInfoMap.toList.foreach(x => inputSignalToChunkSizeMap(x._2._1) = (x._2._2 - 1)/64 + 1)
+  println(inputSignalToChunkSizeMap)
+  private val outputSignalToChunkSizeMap = new LinkedHashMap[String, Int]()
+  outputNodeInfoMap.toList.foreach(x => outputSignalToChunkSizeMap(x._2._1) = (x._2._2 - 1)/64 + 1)
+  private val nodeToStringMap: Map[Data, String] = (inputNodeInfoMap.toList ++ outputNodeInfoMap.toList).map(x => (x._1, x._2._1)).toMap
+  private val cppEmulatorInterface = new CppEmulatorInterface(genCppEmulatorBinaryPath(dut), inputSignalToChunkSizeMap, outputSignalToChunkSizeMap, 0)
+  cppEmulatorInterface.start()//start cpp emulator
+
+
+  def poke(signal: Data, value: BigInt) = {
+    cppEmulatorInterface.poke(nodeToStringMap(signal), value)
+  }
+  def peek(signal: Data): BigInt = {
+    cppEmulatorInterface.peek(nodeToStringMap(signal))
+  }
+  def expect (signal: Data, expected: BigInt, msg: => String = ""): Boolean = {
+    cppEmulatorInterface.expect(nodeToStringMap(signal), expected, msg)
+  }
+  def step(n: Int) {
+    cppEmulatorInterface.step(n)
+  }
+  def finish(): Boolean = {
+    cppEmulatorInterface.finish()
   }
 }
 
@@ -243,3 +186,58 @@ object genClassicTesterCppHarness {
     println(s"ClassicTester CppHarness generated at ${cppHarnessFilePath}")
   }
 }
+object genCppEmulatorBinaryPath {
+  def apply(dut: Module): String = {
+    val rootDirPath = new File(".").getCanonicalPath()
+    val testDirPath = s"${rootDirPath}/test_run_dir"
+    testDirPath + "/V" + dut.name
+  }
+}
+
+object getNodeInfo {
+  def apply(dut: Module): (LinkedHashMap[Data, (String, Int)], LinkedHashMap[Data, (String, Int)]) = {
+    val inputNodeInfoMap = new  LinkedHashMap[Data, (String, Int)]()
+    val outputNodeInfoMap = new  LinkedHashMap[Data, (String, Int)]()
+
+    def add_to_ports_by_direction(port: Data, name: String, width: Int): Unit = {
+      port.dir match {
+        case INPUT => inputNodeInfoMap(port) = (name, width)
+        case OUTPUT => outputNodeInfoMap(port) = (name, width)
+        case _ =>
+      }
+    }
+
+    def parseBundle(b: Bundle, name: String = ""): Unit = {
+      for ((n, e) <- b.namedElts) {
+        val new_name = name + (if (name.length > 0) "_" else "") + n
+        add_to_ports_by_direction(e, new_name, e.getWidth)
+
+        e match {
+          case bb: Bundle => parseBundle(bb, new_name)
+          case vv: Vec[_] => parseVecs(vv, new_name)
+          case ee: Element =>
+          case _ =>
+            throw new Exception(s"bad bundle member $new_name $e")
+        }
+      }
+    }
+    def parseVecs[T <: Data](b: Vec[T], name: String = ""): Unit = {
+      for ((e, i) <- b.zipWithIndex) {
+        val new_name = name + s"($i)"
+        add_to_ports_by_direction(e, new_name, e.getWidth)
+
+        e match {
+          case bb: Bundle => parseBundle(bb, new_name)
+          case vv: Vec[_] => parseVecs(vv, new_name)
+          case ee: Element =>
+          case _ =>
+            throw new Exception(s"bad bundle member $new_name $e")
+        }
+      }
+    }
+
+    parseBundle(dut.io, "io")
+    (inputNodeInfoMap, outputNodeInfoMap)
+  }
+}
+
