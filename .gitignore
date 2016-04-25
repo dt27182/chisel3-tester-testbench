@@ -5,4 +5,5 @@ project/target/*
 *.sw*
 .idea/*
 src/main/resources/standalone-verilator-test/src/obj_dir/*
-
+build/*
+test_run_dir/*

@@ -8,12 +8,6 @@ import Chisel.internal.firrtl.Component
 
 
 object Driver extends App {
-  /*
-  val dut = Chisel.Driver.elaborateModule(() => new Hello())
-  val tester = new HelloTester(dut)
-  tester.finish()
-  */
-
   val s = Chisel.Driver.emit(() => new Hello())
   val rootDir = new File(".").getCanonicalPath()
   val dut = "Hello"
@@ -32,21 +26,5 @@ object Driver extends App {
   // Compile to verilog
   firrtl.VerilogCompiler.run(circuit, writer)
   writer.close()
-
-  val dutMod = Chisel.Driver.elaborateModule(() => new Hello())
-  val tester = new HelloTester(dutMod)
-  tester.finish()
-  genClassicTesterCppHarness(dutMod, "classic_tester_top.cpp", "Hello.v")
-
-/*
-  // Build executable
-  println("Running Chisel.Driver.verilogToCpp")
-  Chisel.Driver.verilogToCpp(dut, new File(buildDir), Seq(), new File(cppHarness)).!
-  Chisel.Driver.cppToExe(dut, new File(buildDir)).!
-  if (Chisel.Driver.executeExpectingSuccess(dut, new File(buildDir))) {
-    println("Test Executed Successfully!")
-  } else {
-    println("ERROR: Test Failed")
-  }
-  */
+  runClassicTester(() => new Hello(), verilogFile) {c => new HelloTester(c)}
 }

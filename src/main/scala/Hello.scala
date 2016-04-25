@@ -1,3 +1,5 @@
+package Chisel.classictester
+
 import scala.collection.mutable.LinkedHashMap
 import Chisel._
 import Chisel.classictester._
@@ -12,10 +14,9 @@ class Hello extends Module {
 
 class HelloTester(c: Hello) extends ClassicTester(c) {
   val a = c.io.in
-  println("DEBUG0")
   poke(c.io.in, BigInt("10000000000000000", 16))
-  println("DEBUG1")
-  println(peek(c.io.out))
+  peek(c.io.out)
+  expect(c.io.out, BigInt("10000000000000000", 16))
 }
 
 /*

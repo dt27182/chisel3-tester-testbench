@@ -31,6 +31,13 @@ class CppEmulatorInterface(val cmd: String, val inputSignalToChunkSizeMap: Linke
   private def int(x: Int):     BigInt = (BigInt(x >>> 1) << 1) | x & 1
   /** Convert a Long to BigInt */
   private def int(x: Long):    BigInt = (BigInt(x >>> 1) << 1) | x & 1
+  protected def bigIntToStr(x: BigInt, base: Int) = base match {
+    case 2  if x < 0 => s"-0b${(-x).toString(base)}"
+    case 16 if x < 0 => s"-0x${(-x).toString(base)}"
+    case 2  => s"0b${x.toString(base)}"
+    case 16 => s"0x${x.toString(base)}"
+    case _ => x.toString(base)
+  }
   /* standalone util functions */
 
   /* state modification functions */
@@ -194,10 +201,11 @@ class CppEmulatorInterface(val cmd: String, val inputSignalToChunkSizeMap: Linke
       mwhile(!recvOutputs) { }
     }
   }
-  def poke(signalName: String, value: BigInt) = {
+  def poke(signalName: String, value: BigInt): Unit = {
     assert(inputSignalValueMap.contains(signalName))
     inputSignalValueMap(signalName) = value
     isStale = true
+    println(s"  POKE ${signalName} <- ${bigIntToStr(value, 16)}")
   }
   def peek(signalName: String): BigInt = {
     assert(inputSignalValueMap.contains(signalName) || outputSignalValueMap.contains(signalName))
@@ -210,7 +218,16 @@ class CppEmulatorInterface(val cmd: String, val inputSignalToChunkSizeMap: Linke
     } else if(outputSignalValueMap.contains(signalName)) {
       result = outputSignalValueMap(signalName)
     }
+    println(s"  PEEK ${signalName} -> ${bigIntToStr(result, 16)}")
     result
+  }
+  def expect (signalName: String, expected: BigInt, msg: => String = ""): Boolean = {
+    val got = peek(signalName)
+    val good = got == expected
+    if (!good) fail
+    println(s"""${msg} ${if (good) "PASS" else "FAIL"}""")
+    println(s"${msg}  EXPECT ${signalName} -> ${bigIntToStr(got, 16)} == ${bigIntToStr(expected, 16)}")
+    good
   }
   def step(n: Int) {
     (0 until n) foreach (_ => takeStep)
