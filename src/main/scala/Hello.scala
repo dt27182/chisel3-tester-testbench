@@ -25,7 +25,7 @@ class HelloTester(c: Hello) extends ClassicTester(c) {
   poke(c.io.in, BigInt("10000000000000001", 16))
   step(1)
   peek(c.io.out)
-  expect(c.io.out, BigInt("10000000000000001", 16))
+  expect(c.io.out, BigInt("10000000000000000", 16))
   peek(c.io.delayed_out)
 }
 
