@@ -1,5 +1,5 @@
 import Chisel._
-import Chisel.classictester._
+import Chisel.hwiotesters._
 import firrtl._
 import java.io._
 

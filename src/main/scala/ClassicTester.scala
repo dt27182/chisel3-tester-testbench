@@ -1,4 +1,4 @@
-package Chisel.classictester
+/*package Chisel.classictester
 
 import java.io.{File, IOException, PrintWriter}
 import java.nio.file.{FileAlreadyExistsException, Files, Paths}
@@ -240,4 +240,4 @@ object getNodeInfo {
     (inputNodeInfoMap, outputNodeInfoMap)
   }
 }
-
+*/

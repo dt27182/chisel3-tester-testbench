@@ -1,8 +1,6 @@
-package Chisel.classictester
-
 import scala.collection.mutable.LinkedHashMap
 import Chisel._
-import Chisel.classictester._
+import Chisel.hwiotesters._
 
 class Hello extends Module {
   val io = new Bundle {

@@ -1,4 +1,4 @@
-package Chisel.classictester
+/*package Chisel.classictester
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -364,4 +364,4 @@ class Channel(name: String) {
   def close { file.close }
   buffer order java.nio.ByteOrder.nativeOrder
   new java.io.File(name).delete
-}
+}*/
