@@ -1,6 +1,6 @@
 import scala.collection.mutable.LinkedHashMap
 import Chisel._
-import Chisel.hwiotesters._
+import Chisel.iotesters._
 
 class innerBundle extends Bundle {
   val c = UInt(INPUT, width=8)
@@ -30,7 +30,7 @@ class SampleDUT extends Module {
   io.test_vec_inner(0).d := io.test_vec_inner(0).c
 }
 
-class SampleDUTTester(c: SampleDUT) extends ClassicTester(c) {
+class SampleDUTTester(c: SampleDUT, p: String) extends ClassicTester(c, p) {
   poke(c.io.in, BigInt("10000000000000000", 16))
   peek(c.io.out)
   expect(c.io.out, BigInt("10000000000000000", 16))
