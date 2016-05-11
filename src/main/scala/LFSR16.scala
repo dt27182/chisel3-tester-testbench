@@ -14,7 +14,7 @@ class LFSR16 extends Module {
   io.out := res
 }
 
-class LFSR16Tests(c: LFSR16, p: String) extends ClassicTester(c, p) {
+class LFSR16Tests(c: LFSR16) extends ClassicTester(c) {
   var res = 1
   for (t <- 0 until 16) {
     val inc = rnd.nextInt(2)

@@ -9,7 +9,7 @@ class Hello extends Module {
   io.out := io.in
 }
 
-class HelloTests(c: Hello, p: String) extends ClassicTester(c, p) {
+class HelloTests(c: Hello) extends ClassicTester(c) {
   step(1)
   expect(c.io.out, 42)
 }

@@ -30,7 +30,7 @@ class SampleDUT extends Module {
   io.test_vec_inner(0).d := io.test_vec_inner(0).c
 }
 
-class SampleDUTTester(c: SampleDUT, p: String) extends ClassicTester(c, p) {
+class SampleDUTTester(c: SampleDUT) extends ClassicTester(c) {
   poke(c.io.in, BigInt("10000000000000000", 16))
   peek(c.io.out)
   expect(c.io.out, BigInt("10000000000000000", 16))

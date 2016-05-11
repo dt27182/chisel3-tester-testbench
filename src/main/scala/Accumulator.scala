@@ -11,7 +11,7 @@ class Accumulator extends Module {
   io.out := accumulator
 }
 
-class AccumulatorTests(c: Accumulator, p: String) extends ClassicTester(c, p) {
+class AccumulatorTests(c: Accumulator, emulBinPath: Option[String] = None) extends ClassicTester(c, emulBinPath = emulBinPath) {
   var tot = 0
   for (t <- 0 until 16) {
     val in = rnd.nextInt(2)

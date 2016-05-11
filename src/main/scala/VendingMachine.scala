@@ -31,7 +31,7 @@ class VendingMachine extends Module {
   io.valid := (state === sOk)
 }
 
-class VendingMachineTests(c: VendingMachine, p: String) extends ClassicTester(c, p) {
+class VendingMachineTests(c: VendingMachine) extends ClassicTester(c) {
   var money = 0
   var isValid = false
   for (t <- 0 until 20) {
