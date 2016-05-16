@@ -4,18 +4,19 @@ import java.io._
 
 object genCpp {
   def apply(dutGen: ()=> Chisel.Module, dutName: String) = {
-    val dutModule = Chisel.Driver.emit(dutGen)
     val rootDirPath = new File(".").getCanonicalPath()
     val testDirPath = s"${rootDirPath}/test_run_dir"
-    val verilogFilePath = s"${testDirPath}/${dutName}.v"
 
-    // Parse circuit into FIRRTL
-    val circuit = firrtl.Parser.parse(dutModule.split("\n"))
-
-    val writer = new PrintWriter(new File(verilogFilePath))
-    // Compile to verilog
-    firrtl.VerilogCompiler.run(circuit, writer)
-    writer.close()
+    val circuit = Chisel.Driver.elaborate(dutGen)
+    // Dump FIRRTL for debugging
+    val firrtlIRFilePath = s"${testDirPath}/${circuit.name}.ir"
+    Chisel.Driver.dumpFirrtl(circuit, Some(new File(firrtlIRFilePath)))
+    // Parse FIRRTL
+    //val ir = firrtl.Parser.parse(Chisel.Driver.emit(dutGen) split "\n")
+    // Generate Verilog
+    val verilogFilePath = s"${testDirPath}/${circuit.name}.v"
+    //val v = new PrintWriter(new File(s"${dir}/${circuit.name}.v"))
+    firrtl.Driver.compile(firrtlIRFilePath, verilogFilePath, new firrtl.VerilogCompiler())
 
     val verilogFileName = verilogFilePath.split("/").last
     val cppHarnessFileName = "classic_tester_top.cpp"
@@ -25,7 +26,6 @@ object genCpp {
 
     copyCppEmulatorHeaderFiles(testDirPath)
 
-    val dut = Chisel.Driver.elaborateModule(dutGen)
     genCppHarness(dutGen, verilogFileName, cppHarnessFilePath, vcdFilePath)
     Chisel.Driver.verilogToCpp(verilogFileName.split("\\.")(0), new File(testDirPath), Seq(), new File(cppHarnessFilePath)).!
     Chisel.Driver.cppToExe(verilogFileName.split("\\.")(0), new File(testDirPath)).!
@@ -33,35 +33,11 @@ object genCpp {
   }
 }
 
-object genVerilog {
-  def apply(dutGen: ()=> Chisel.Module, dutName: String) = {
-    val dutModule = Chisel.Driver.emit(dutGen)
-    val rootDir = new File(".").getCanonicalPath()
-    val buildDir = s"${rootDir}/build"
-    val verilogFilePath = s"${buildDir}/${dutName}.v"
-
-    // Parse circuit into FIRRTL
-    val circuit = firrtl.Parser.parse(dutModule.split("\n"))
-
-    val writer = new PrintWriter(new File(verilogFilePath))
-    // Compile to verilog
-    firrtl.VerilogCompiler.run(circuit, writer)
-    writer.close()
-
-    verilogFilePath
-  }
-}
 object Driver extends App {
   val cppFilePath = genCpp(() => new Accumulator(), "Accumulator")
   runClassicTester(() => new Accumulator(), cppFilePath) {(c, p) => new AccumulatorTests(c,emulBinPath=p)}
 
 
 
-  //chiselMainTest(Array(), () => new SampleDUT()) {(c,p) => new SampleDUTTester(c, p)}
-  //verilogFilePath = genVerilog(() => new Accumulator(), "Accumulator")
-  //runClassicTester(() => new Accumulator(), verilogFilePath) {c => new AccumulatorTests(c)}
-  //verilogFilePath = genVerilog(() => new LFSR16(), "LFSR16")
-  //runClassicTester(() => new LFSR16(), verilogFilePath) {c => new LFSR16Tests(c)}
-  //verilogFilePath = genVerilog(() => new VendingMachine(), "VendingMachine")
-  //runClassicTester(() => new VendingMachine(), verilogFilePath) {c => new VendingMachineTests(c)}
+  //chiselMainTest(Array("--test"), () => new SampleDUT()) {(c) => new SampleDUTTester(c)}
 }
